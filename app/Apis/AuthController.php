@@ -110,7 +110,7 @@ class AuthController extends ResourceController
     {
         $key = getenv('JWT_SECRET');
         $issuedAt = time();
-        $expirationTime = $issuedAt + ($type == 'access' ? 60 : 120);
+        $expirationTime = $issuedAt + ($type == 'access' ? 3600 : 7200);
         $payload = [
             'iat' => $issuedAt,
             'exp' => $expirationTime,
