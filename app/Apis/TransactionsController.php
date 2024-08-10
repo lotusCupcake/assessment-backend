@@ -6,6 +6,7 @@ use App\Models\BalanceModel;
 use App\Models\TopUpsModel;
 use App\Models\PaymentsModel;
 use App\Models\TransfersModel;
+use App\Models\UsersModel;
 use CodeIgniter\RESTful\ResourceController;
 
 class TransactionsController extends ResourceController
@@ -14,6 +15,7 @@ class TransactionsController extends ResourceController
     protected $topUpsModel;
     protected $paymentsModel;
     protected $transfersModel;
+    protected $usersModel;
 
     public function __construct()
     {
@@ -21,6 +23,7 @@ class TransactionsController extends ResourceController
         $this->topUpsModel = new TopUpsModel();
         $this->paymentsModel = new PaymentsModel();
         $this->transfersModel = new TransfersModel();
+        $this->usersModel = new UsersModel();
     }
 
     public function topup()
@@ -107,12 +110,13 @@ class TransactionsController extends ResourceController
         $balance = $this->balanceModel->where('user_id', $user->sub)->first();
 
         if (!$balance || $balance['balance'] < $amount) {
-            return $this->respond(['message' => 'Balance is not enough'], 400);
+            return $this->respond(['message' => 'Balance is not enough']);
         }
 
-        $targetBalance = $this->balanceModel->where('user_id', $targetUser)->first();
+        $targetBalance = $this->usersModel->where('user_id', $targetUser)->first();
+
         if (!$targetBalance) {
-            return $this->respond(['message' => 'Target user not found'], 404);
+            return $this->respond(['message' => 'Target user not found']);
         }
 
         $balanceBefore = $balance['balance'];
@@ -121,7 +125,12 @@ class TransactionsController extends ResourceController
         $this->balanceModel->update($user->sub, ['balance' => $balanceAfter]);
 
         $targetBalanceAfter = $targetBalance['balance'] + $amount;
-        $this->balanceModel->update($targetUser, ['balance' => $targetBalanceAfter]);
+
+        if ($this->balanceModel->where('user_id', $targetUser)->first()) {
+            $this->balanceModel->update($targetUser, ['balance' => $targetBalanceAfter]);
+        } else {
+            $this->balanceModel->insert(['user_id' => $targetUser, 'balance' => $targetBalanceAfter]);
+        }
 
         $transferData = [
             'transfer_id' => uuid(),
@@ -140,6 +149,6 @@ class TransactionsController extends ResourceController
         return $this->respond([
             'status' => 'SUCCESS',
             'result' => $transferData,
-        ], 200);
+        ]);
     }
 }
