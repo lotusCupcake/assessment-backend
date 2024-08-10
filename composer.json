@@ -12,6 +12,7 @@
     "require": {
         "php": "^7.4 || ^8.0",
         "codeigniter4/framework": "^4.0",
+        "firebase/php-jwt": "^6.10",
         "michalsn/codeigniter4-uuid": "^1.0"
     },
     "require-dev": {

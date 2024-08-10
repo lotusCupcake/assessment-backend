@@ -19,6 +19,8 @@ and any database settings. We recommend following the lines below:
 
 `app.baseURL = 'http://localhost:8080'`
 
+`JWT_SECRET="assessment-backend"`
+
 `database.default.hostname = your_host`
 
 `database.default.database = assessment_backend`

@@ -51,10 +51,26 @@ class CreateTables extends Migration
 
         $this->forge->addKey('user_id', true);
         $this->forge->createTable('users');
+
+        // refresh_tokens table
+        $this->forge->addField([
+            'user_id' => [
+                'type' => 'UUID',
+                'null' => false,
+            ],
+            'token' => [
+                'type' => 'TEXT',
+                'null' => false,
+            ],
+        ]);
+
+        $this->forge->addKey('user_id', true);
+        $this->forge->createTable('refresh_tokens');
     }
 
     public function down()
     {
         $this->forge->dropTable('users');
+        $this->forge->dropTable('refresh_tokens');
     }
 }
