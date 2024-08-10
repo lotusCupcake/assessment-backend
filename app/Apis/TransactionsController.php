@@ -42,7 +42,7 @@ class TransactionsController extends ResourceController
             'amount_top_up' => $amount,
             'balance_before' => $balanceBefore,
             'balance_after' => $balanceAfter,
-            'status' => '1',
+            'status' => 'SUCCESS',
             'created_date' => date('Y-m-d H:i:s')
         ];
 
@@ -86,7 +86,7 @@ class TransactionsController extends ResourceController
             'remarks' => $remarks,
             'balance_before' => $balanceBefore,
             'balance_after' => $balanceAfter,
-            'status' => '1',
+            'status' => 'SUCCESS',
             'created_date' => date('Y-m-d H:i:s'),
         ];
 
@@ -138,7 +138,7 @@ class TransactionsController extends ResourceController
             'target_user_id' => $targetUser,
             'amount' => $amount,
             'remarks' => $remarks,
-            'status' => '1',
+            'status' => 'SUCCESS',
             'balance_before' => $balanceBefore,
             'balance_after' => $balanceAfter,
             'created_date' => date('Y-m-d H:i:s'),
@@ -150,5 +150,22 @@ class TransactionsController extends ResourceController
             'status' => 'SUCCESS',
             'result' => $transferData,
         ]);
+    }
+
+    public function transactions()
+    {
+        $user = $this->request->user;
+        $transfers = $this->transfersModel->where('user_id', $user->sub)->findAll();
+        $payments = $this->paymentsModel->where('user_id', $user->sub)->findAll();
+        $topups = $this->topUpsModel->where('user_id', $user->sub)->findAll();
+
+        $response = [
+            'status' => 'SUCCESS',
+            'result' => [
+                array_merge($transfers, $payments, $topups)
+            ]
+        ];
+
+        return $this->respond($response);
     }
 }

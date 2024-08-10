@@ -105,7 +105,8 @@ class CreateTables extends Migration
                 'null' => false,
             ],
             'status' => [
-                'type' => 'BIT',
+                'type' => 'VARCHAR',
+                'constraint' => '50',
                 'null' => false,
             ],
             'created_date' => [
@@ -145,7 +146,8 @@ class CreateTables extends Migration
                 'null' => false,
             ],
             'status' => [
-                'type' => 'BIT',
+                'type' => 'VARCHAR',
+                'constraint' => '50',
                 'null' => false,
             ],
             'created_date' => [
@@ -189,7 +191,8 @@ class CreateTables extends Migration
                 'null' => false,
             ],
             'status' => [
-                'type' => 'BIT',
+                'type' => 'VARCHAR',
+                'constraint' => '50',
                 'null' => false,
             ],
             'created_date' => [

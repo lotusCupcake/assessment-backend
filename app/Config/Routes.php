@@ -12,4 +12,6 @@ $routes->post('/refresh', '\App\Apis\AuthController::refreshToken');
 $routes->post('/topup', '\App\Apis\TransactionsController::topup', ['filter' => 'JWTAuth']);
 $routes->post('/pay', '\App\Apis\TransactionsController::pay', ['filter' => 'JWTAuth']);
 $routes->post('/transfer', '\App\Apis\TransactionsController::transfer', ['filter' => 'JWTAuth']);
+$routes->get('/transactions', '\App\Apis\TransactionsController::transactions', ['filter' => 'JWTAuth']);
+$routes->put('/editProfile', '\App\Apis\ProfileController::editProfile', ['filter' => 'JWTAuth']);
 
