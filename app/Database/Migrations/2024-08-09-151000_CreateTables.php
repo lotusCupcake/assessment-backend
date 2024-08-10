@@ -116,6 +116,46 @@ class CreateTables extends Migration
 
         $this->forge->addKey('top_up_id', true);
         $this->forge->createTable('top_ups');
+
+        //payments table
+        $this->forge->addField([
+            'payment_id' => [
+                'type' => 'UUID',
+                'null' => false,
+            ],
+            'user_id' => [
+                'type' => 'UUID',
+                'null' => false,
+            ],
+            'amount' => [
+                'type' => 'INT',
+                'null' => false,
+            ],
+            'remarks' => [
+                'type' => 'VARCHAR',
+                'constraint' => '100',
+                'null' => false,
+            ],
+            'balance_before' => [
+                'type' => 'INT',
+                'null' => false,
+            ],
+            'balance_after' => [
+                'type' => 'INT',
+                'null' => false,
+            ],
+            'status' => [
+                'type' => 'BIT',
+                'null' => false,
+            ],
+            'created_date' => [
+                'type' => 'TIMESTAMP',
+                'null' => false,
+            ],
+        ]);
+
+        $this->forge->addKey('payment_id', true);
+        $this->forge->createTable('payments');
     }
 
     public function down()
@@ -124,5 +164,6 @@ class CreateTables extends Migration
         $this->forge->dropTable('refresh_tokens');
         $this->forge->dropTable('balances');
         $this->forge->dropTable('top_ups');
+        $this->forge->dropTable('payments');
     }
 }
