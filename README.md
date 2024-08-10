@@ -12,7 +12,7 @@ Follow these steps for the testing process:
 
 ## Setup
 
-Create a postgresql database on your server, copy `env` to `.env` and tailor for your app, specifically the baseURL
+Create a PotgresQL database on your server, copy `env` to `.env` and tailor for your app, specifically the baseURL
 and any database settings. We recommend following the lines below:
 
 `CI_ENVIRONMENT = production`
