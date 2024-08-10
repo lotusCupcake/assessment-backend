@@ -5,14 +5,20 @@ namespace App\Apis;
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 use App\Models\UsersModel;
+use App\Models\RefreshTokenModel;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+use Firebase\JWT\ExpiredException;
 
 class AuthController extends ResourceController
 {
     protected $usersModel;
+    protected $refreshTokenModel;
 
     public function __construct()
     {
         $this->usersModel = new UsersModel();
+        $this->refreshTokenModel = new RefreshTokenModel();
     }
 
     use ResponseTrait;
@@ -20,7 +26,7 @@ class AuthController extends ResourceController
     public function register()
     {
         $data = [
-            'user_id' => $this->uuid(),
+            'user_id' => uuid(),
             'first_name' => $this->request->getVar('first_name'),
             'last_name' => $this->request->getVar('last_name'),
             'phone_number' => $this->request->getVar('phone_number'),
@@ -59,11 +65,99 @@ class AuthController extends ResourceController
         return $this->respond($response);
     }
 
-    public function uuid()
+    public function login()
     {
-        $uuid = service('uuid');
-        $uuid4 = $uuid->uuid4();
-        $string = $uuid4->toString();
-        return $string;
+        $phoneNumber = $this->request->getVar('phone_number');
+        $pin = $this->request->getVar('pin');
+
+        $user = $this->usersModel->where('phone_number', $phoneNumber)->first();
+
+        if ($user && $user['pin'] === $pin) {
+
+            $accessToken = $this->generateTokens($user['user_id'], 'access');
+            $refreshToken = $this->generateTokens($user['user_id'], 'refresh');
+
+            $cekRefresh = $this->refreshTokenModel->where('user_id', $user['user_id'])->first();
+
+            if ($cekRefresh) {
+                $this->refreshTokenModel->update($user['user_id'], ['token' => $refreshToken]);
+            } else {
+                $this->refreshTokenModel->insert(['user_id' => $user['user_id'], 'token' => $refreshToken]);
+            }
+
+            $response = [
+                'status' => 'SUCCESS',
+                'result' => [
+                    'access_token' => $accessToken,
+                    'refresh_token' => $refreshToken,
+                ]
+            ];
+
+            return $this->respond($response);
+        } else {
+            return $this->respond(['message' => 'Phone number and pin doesn\'t match.']);
+        }
     }
+
+    public function generateTokens($id, $type)
+    {
+        $key = getenv('JWT_SECRET');
+        $issuedAt = time();
+        $expirationTime = $issuedAt + ($type == 'access' ? 3600 : 7200);
+        $payload = [
+            'iat' => $issuedAt,
+            'exp' => $expirationTime,
+            'sub' => $id,
+        ];
+
+        $token = JWT::encode($payload, $key, 'HS256');
+
+        return $token;
+    }
+
+    public function refreshToken()
+    {
+        $refreshToken = $this->request->getVar('refresh_token');
+
+        if (!$refreshToken) {
+            return $this->respond(['message' => 'Invalid refresh token 1'], 400);
+        }
+
+        $key = getenv('JWT_SECRET');
+
+        try {
+            $decoded = JWT::decode($refreshToken, new Key($key, 'HS256'));
+            $validation = $this->isValidRefreshToken($decoded->sub, $refreshToken);
+            if ($validation[0]) {
+                $newToken = $this->generateTokens($decoded->sub, 'refresh');
+                return $this->respond([
+                    'status' => 'SUCCESS',
+                    'access_token' => $newToken
+                ]);
+            } else {
+                return $this->respond(['message' => $validation[1]], 400);
+            }
+        } catch (ExpiredException $e) {
+            return $this->respond(['message' => 'Refresh token expired'], 401);
+        } catch (\Exception $e) {
+            return $this->respond(['message' => 'Invalid refresh token'], 400);
+        }
+    }
+
+
+    public function isValidRefreshToken($userId, $token)
+    {
+        $cek = $this->refreshTokenModel->where('user_id', $userId)->first();
+
+        if (!$cek) {
+            return [false, 'Refresh token not found'];
+        }
+
+        if ($cek['token'] !== $token) {
+            return [false, 'Refresh token does not match'];
+        }
+
+        return [true, 'Refresh token valid'];
+    }
+
 }
