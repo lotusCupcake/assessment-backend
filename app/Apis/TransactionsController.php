@@ -113,9 +113,9 @@ class TransactionsController extends ResourceController
             return $this->respond(['message' => 'Balance is not enough']);
         }
 
-        $targetBalance = $this->usersModel->where('user_id', $targetUser)->first();
+        $target = $this->usersModel->where('user_id', $targetUser)->first();
 
-        if (!$targetBalance) {
+        if (!$target) {
             return $this->respond(['message' => 'Target user not found']);
         }
 
@@ -124,9 +124,11 @@ class TransactionsController extends ResourceController
 
         $this->balanceModel->update($user->sub, ['balance' => $balanceAfter]);
 
-        $targetBalanceAfter = $targetBalance['balance'] + $amount;
+        $targetBalance = $this->balanceModel->where('user_id', $targetUser)->first();
 
-        if ($this->balanceModel->where('user_id', $targetUser)->first()) {
+        $targetBalanceAfter = $targetBalance['balance'] ?? 0 + $amount;
+
+        if ($targetBalance) {
             $this->balanceModel->update($targetUser, ['balance' => $targetBalanceAfter]);
         } else {
             $this->balanceModel->insert(['user_id' => $targetUser, 'balance' => $targetBalanceAfter]);
@@ -150,6 +152,11 @@ class TransactionsController extends ResourceController
             'status' => 'SUCCESS',
             'result' => $transferData,
         ]);
+
+        // return $this->respond([
+        //     'status' => 'SUCCESS',
+        //     'result' => $balance,
+        // ]);
     }
 
     public function transactions()

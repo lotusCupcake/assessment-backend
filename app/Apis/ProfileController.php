@@ -18,16 +18,18 @@ class ProfileController extends ResourceController
     {
         $user = $this->request->user;
 
-        $data = $_GET;
+        $data = (array) $this->request->getJsonVar();
 
-        // $this->usersModel->update($user->sub, $data);
+        $data['update_date'] = date('Y-m-d H:i:s');
 
-        // $user = $this->usersModel->find($user->sub);
+        $this->usersModel->update($user->sub, $data);
 
-        // $response = [
-        //     'status' => 'SUCCESS',
-        //     'result' => $user
-        // ];
-        return $this->respond($data);
+        $user = $this->usersModel->find($user->sub);
+
+        $response = [
+            'status' => 'SUCCESS',
+            'result' => $user
+        ];
+        return $this->respond($response);
     }
 }
