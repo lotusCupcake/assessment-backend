@@ -8,6 +8,7 @@ use App\Models\UsersModel;
 use App\Models\RefreshTokenModel;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Firebase\JWT\ExpiredException;
 
 class AuthController extends ResourceController
 {
@@ -25,7 +26,7 @@ class AuthController extends ResourceController
     public function register()
     {
         $data = [
-            'user_id' => $this->uuid(),
+            'user_id' => uuid(),
             'first_name' => $this->request->getVar('first_name'),
             'last_name' => $this->request->getVar('last_name'),
             'phone_number' => $this->request->getVar('phone_number'),
@@ -62,14 +63,6 @@ class AuthController extends ResourceController
         ];
 
         return $this->respond($response);
-    }
-
-    public function uuid()
-    {
-        $uuid = service('uuid');
-        $uuid4 = $uuid->uuid4();
-        $string = $uuid4->toString();
-        return $string;
     }
 
     public function login()
@@ -121,4 +114,50 @@ class AuthController extends ResourceController
 
         return $token;
     }
+
+    public function refreshToken()
+    {
+        $refreshToken = $this->request->getVar('refresh_token');
+
+        if (!$refreshToken) {
+            return $this->respond(['message' => 'Invalid refresh token 1'], 400);
+        }
+
+        $key = getenv('JWT_SECRET');
+
+        try {
+            $decoded = JWT::decode($refreshToken, new Key($key, 'HS256'));
+            $validation = $this->isValidRefreshToken($decoded->sub, $refreshToken);
+            if ($validation[0]) {
+                $newToken = $this->generateTokens($decoded->sub, 'refresh');
+                return $this->respond([
+                    'status' => 'SUCCESS',
+                    'access_token' => $newToken
+                ]);
+            } else {
+                return $this->respond(['message' => $validation[1]], 400);
+            }
+        } catch (ExpiredException $e) {
+            return $this->respond(['message' => 'Refresh token expired'], 401);
+        } catch (\Exception $e) {
+            return $this->respond(['message' => 'Invalid refresh token'], 400);
+        }
+    }
+
+
+    public function isValidRefreshToken($userId, $token)
+    {
+        $cek = $this->refreshTokenModel->where('user_id', $userId)->first();
+
+        if (!$cek) {
+            return [false, 'Refresh token not found'];
+        }
+
+        if ($cek['token'] !== $token) {
+            return [false, 'Refresh token does not match'];
+        }
+
+        return [true, 'Refresh token valid'];
+    }
+
 }
