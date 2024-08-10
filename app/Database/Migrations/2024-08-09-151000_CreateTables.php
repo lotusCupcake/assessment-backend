@@ -4,10 +4,11 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateUsersTable extends Migration
+class CreateTables extends Migration
 {
     public function up()
     {
+        // users table
         $this->forge->addField([
             'user_id' => [
                 'type' => 'UUID',
